@@ -41,12 +41,15 @@
                 paths = [
                   ros-core
                   rclcpp
+                  rclpy
                   sensor-msgs
                   geometry-msgs
                   nav-msgs
                   ament-cmake
                   ament-cmake-core
+                  cv-bridge
                   example-interfaces
+                  aruco
                 ];
               }
             )
