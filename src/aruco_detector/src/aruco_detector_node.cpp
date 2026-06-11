@@ -1,3 +1,4 @@
+#include "sensor_msgs/msg/image.hpp"
 #include <memory>
 #include <vector>
 
@@ -31,6 +32,7 @@ public:
                     this,
                     std::placeholders::_1));
 
+        image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("/camera/image_aruco", 10);
         RCLCPP_INFO(
             this->get_logger(),
             "ArUco Detector Node started. Waiting for images...");
@@ -42,23 +44,17 @@ public:
     }
 
 private:
-    void image_callback(
-        const sensor_msgs::msg::Image::SharedPtr msg)
+    void image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
     {
         cv_bridge::CvImagePtr cv_ptr;
 
         try
         {
-            cv_ptr = cv_bridge::toCvCopy(
-                msg,
-                sensor_msgs::image_encodings::BGR8);
+            cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
         }
         catch (const cv_bridge::Exception &e)
         {
-            RCLCPP_ERROR(
-                this->get_logger(),
-                "cv_bridge exception: %s",
-                e.what());
+            RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
             return;
         }
 
@@ -66,38 +62,25 @@ private:
         std::vector<std::vector<cv::Point2f>> marker_corners;
         std::vector<std::vector<cv::Point2f>> rejected_candidates;
 
-        detector_.detectMarkers(
-            cv_ptr->image,
-            marker_corners,
-            marker_ids,
-            rejected_candidates);
+        detector_.detectMarkers(cv_ptr->image, marker_corners, marker_ids, rejected_candidates);
 
         if (!marker_ids.empty())
         {
-            RCLCPP_INFO(
-                this->get_logger(),
-                "Detected %zu marker(s)",
-                marker_ids.size());
+            RCLCPP_INFO(this->get_logger(), "Detected %zu marker(s)", marker_ids.size());
 
-            for (const auto &id : marker_ids)
-            {
-                RCLCPP_INFO(
-                    this->get_logger(),
-                    "Marker ID: %d",
-                    id);
-            }
+            // for (const auto &id : marker_ids)
+            // {
+            //     RCLCPP_INFO(this->get_logger(), "Marker ID: %d", id);
+            // }
 
-            cv::aruco::drawDetectedMarkers(
-                cv_ptr->image,
-                marker_corners,
-                marker_ids);
+            cv::aruco::drawDetectedMarkers(cv_ptr->image, marker_corners, marker_ids);
         }
 
-        cv::imshow("ArUco Detector", cv_ptr->image);
-        cv::waitKey(1);
+        image_pub_->publish(*cv_ptr->toImageMsg());
     }
 
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
 
     cv::aruco::Dictionary dictionary_;
     cv::aruco::DetectorParameters detector_params_;
