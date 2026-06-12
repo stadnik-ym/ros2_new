@@ -2,5 +2,16 @@ build/
 install/
 log/
 
+src/build/
+src/install/
+src/log/
+
 _flake.lock
 _flake.nix
+
+.cache/
+./clangd
+
+*.o
+*.a
+*.so
