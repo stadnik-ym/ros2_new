@@ -1,0 +1,23 @@
+name: Lint Code
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run clang-format style check
+        uses: JeS24/clang-format-action@v2.3.0
+        with:
+          path: "src"
+          extensions: "cpp,hpp,h"
+          clang-format-version: "17"
+          style: "file"
+          fallback-style: "Google"

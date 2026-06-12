@@ -15,3 +15,5 @@ _flake.nix
 *.o
 *.a
 *.so
+
+.docker/result
