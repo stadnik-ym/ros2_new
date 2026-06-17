@@ -23,7 +23,6 @@
           name = "Example project";
           packages = [
             pkgs.colcon
-            pkgs.opencv
 
             #c++
             pkgs.gcc
@@ -34,6 +33,11 @@
             # pkgs.cargo
             # pkgs.rustc
             # pkgs.rust-analyzer
+
+            #dependecies
+            pkgs.libgpiod
+            pkgs.lgpio
+            pkgs.opencv
             (
               with pkgs.rosPackages.jazzy;
               buildEnv {
