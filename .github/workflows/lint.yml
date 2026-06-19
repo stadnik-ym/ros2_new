@@ -1,0 +1,28 @@
+name: Lint Code
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+      - "feature/**"
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run clang-format style check
+        uses: DoozyX/clang-format-lint-action@v0.20
+        with:
+          source: "src"
+          extensions: "cpp,cc"
+          clangFormatVersion: 20
+          style: "chromium"
+
+# TODO: ДОРОБИТИ ЛІНТЕР, ЩОБ ЗМІНИ ВСТУПАЛИ В СИЛУ

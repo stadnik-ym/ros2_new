@@ -1,62 +1,71 @@
 {
   inputs = {
-    # nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nix-ros-overlay.url = "github:lopsided98/nix-ros-overlay/master";
-    nixpkgs.follows = "nix-ros-overlay/nixpkgs"; # IMPORTANT!!!
+    nixpkgs.follows = "nix-ros-overlay/nixpkgs";
+    flake-utils.follows = "nix-ros-overlay/flake-utils";
   };
+
   outputs =
     {
       self,
       nix-ros-overlay,
       nixpkgs,
+      flake-utils,
     }:
-    nix-ros-overlay.inputs.flake-utils.lib.eachDefaultSystem (
+    flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ nix-ros-overlay.overlays.default ];
         };
+
+        ros-packages =
+          with pkgs.rosPackages.jazzy;
+          buildEnv {
+            paths = [
+              ros-core
+              rclcpp
+              rclpy
+              sensor-msgs
+              geometry-msgs
+              nav-msgs
+              ament-cmake
+              ament-cmake-core
+              cv-bridge
+              example-interfaces
+              aruco
+            ];
+          };
+
       in
       {
         devShells.default = pkgs.mkShell {
           name = "Example project";
-          packages = [
-            pkgs.colcon
-            pkgs.opencv
 
-            #c++
-            pkgs.gcc
+          nativeBuildInputs = [
             pkgs.cmake
-            pkgs.pcl
             pkgs.clang-tools
-            #rust
-            # pkgs.cargo
-            # pkgs.rustc
-            # pkgs.rust-analyzer
-            (
-              with pkgs.rosPackages.jazzy;
-              buildEnv {
-                # underlay = true;
-                paths = [
-                  ros-core
-                  rclcpp
-                  rclpy
-                  sensor-msgs
-                  geometry-msgs
-                  nav-msgs
-                  ament-cmake
-                  ament-cmake-core
-                  cv-bridge
-                  example-interfaces
-                  aruco
-                ];
-              }
-            )
+            pkgs.colcon
           ];
+
+          buildInputs = [
+            pkgs.libgpiod
+            pkgs.lgpio
+            pkgs.opencv
+            pkgs.pcl
+            ros-packages
+          ];
+
+          shellHook = ''
+            export LD_LIBRARY_PATH=${pkgs.lgpio}/lib:$LD_LIBRARY_PATH
+            export LIBRARY_PATH=${pkgs.lgpio}/lib:$LIBRARY_PATH
+            export CPATH=${pkgs.lgpio}/include:$CPATH
+          '';
         };
       }
     );
+
   nixConfig = {
     extra-substituters = [ "https://ros.cachix.org" ];
     extra-trusted-public-keys = [ "ros.cachix.org-1:dSyZxI8geDCJrwgvCOHDoAfOm5sV1wCPjBkKL+38Rvo=" ];

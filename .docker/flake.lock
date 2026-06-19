@@ -18,6 +18,25 @@
         "type": "github"
       }
     },
+    "main-project": {
+      "inputs": {
+        "nix-ros-overlay": "nix-ros-overlay",
+        "nixpkgs": [
+          "main-project",
+          "nix-ros-overlay",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "path": "../",
+        "type": "path"
+      },
+      "original": {
+        "path": "../",
+        "type": "path"
+      },
+      "parent": []
+    },
     "nix-ros-overlay": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -25,11 +44,11 @@
         "rosdistro": "rosdistro"
       },
       "locked": {
-        "lastModified": 1781294130,
-        "narHash": "sha256-5YNXRhVC6tYWc18tN4ZkWKgQaPnsiFOWQPOasyKjMZM=",
+        "lastModified": 1779526397,
+        "narHash": "sha256-HWFG5voy8Y9nDkhp3zzFThX99UmgSOsyFpmAglXdtvs=",
         "owner": "lopsided98",
         "repo": "nix-ros-overlay",
-        "rev": "13634b579b61299abfc5389d7d47dd7d1701a3a2",
+        "rev": "1abff578f2919094ac076407c46658c0a0de41c9",
         "type": "github"
       },
       "original": {
@@ -41,11 +60,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1778869304,
-        "narHash": "sha256-30sZNZoA1cqF5JNO9fVX+wgiQYjB7HJqqJ4ztCDeBZE=",
+        "lastModified": 1771369470,
+        "narHash": "sha256-0NBlEBKkN3lufyvFegY4TYv5mCNHbi5OmBDrzihbBMQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d233902339c02a9c334e7e593de68855ad26c4cb",
+        "rev": "0182a361324364ae3f436a63005877674cf45efb",
         "type": "github"
       },
       "original": {
@@ -57,25 +76,17 @@
     },
     "root": {
       "inputs": {
-        "flake-utils": [
-          "nix-ros-overlay",
-          "flake-utils"
-        ],
-        "nix-ros-overlay": "nix-ros-overlay",
-        "nixpkgs": [
-          "nix-ros-overlay",
-          "nixpkgs"
-        ]
+        "main-project": "main-project"
       }
     },
     "rosdistro": {
       "flake": false,
       "locked": {
-        "lastModified": 1780665549,
-        "narHash": "sha256-QzobMKNpcpS4uWETzPxXkt0F66Sji15N+xsK1JcEWDU=",
+        "lastModified": 1779440547,
+        "narHash": "sha256-zwkFhi7/rGJ1DPykUsulXnAJXFxbR5YQO10GuFUEBfo=",
         "owner": "ros",
         "repo": "rosdistro",
-        "rev": "bcec45c05427f0ad6860cb323695995d8cb1e4bd",
+        "rev": "7111412b11e86fbb1751db4c4955d798f95e5cf3",
         "type": "github"
       },
       "original": {

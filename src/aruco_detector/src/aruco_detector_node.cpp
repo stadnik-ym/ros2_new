@@ -68,10 +68,10 @@ private:
         {
             RCLCPP_INFO(this->get_logger(), "Detected %zu marker(s)", marker_ids.size());
 
-            // for (const auto &id : marker_ids)
-            // {
-            //     RCLCPP_INFO(this->get_logger(), "Marker ID: %d", id);
-            // }
+            for (const auto &id : marker_ids)
+            {
+                RCLCPP_INFO(this->get_logger(), "Marker ID: %d", id);
+            }
 
             cv::aruco::drawDetectedMarkers(cv_ptr->image, marker_corners, marker_ids);
         }

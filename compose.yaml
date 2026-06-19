@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  ros2_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - ROS_DISTRO=jazzy
+    image: ros2_new:latest
+    container_name: ros2_workspace_container
+    network_mode: "host"
+    ipc: "host"
+    environment:
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    # devices:
+    #   - "/dev/video0:/dev/video0"
+    restart: unless-stopped
