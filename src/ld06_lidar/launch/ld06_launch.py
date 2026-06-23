@@ -10,7 +10,7 @@ from pathlib import Path
 lidar_safety_yaml = str(
     Path(
         get_package_share_directory('ld06_lidar')
-    ) / 'config' / 'lidar_safety.yaml'
+    ) / 'launch' / 'lidar_safety.yaml'
 )
 
 def generate_launch_description():
