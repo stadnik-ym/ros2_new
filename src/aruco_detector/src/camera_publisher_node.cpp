@@ -25,23 +25,29 @@ public:
                     "Starting camera node with backend: %s",
                     backend.c_str());
 
-        std::string pipeline;
 
-        if (backend == "libcamera")
-        {
-            pipeline =
-                "libcamerasrc ! "
-                "video/x-raw,format=RGBx,width=640,height=480,framerate=30/1 ! "
-                "videoconvert ! "
-                "video/x-raw,format=BGR ! "
-                "appsink drop=true max-buffers=1 sync=false";
-        }
-        else
-        {
-            RCLCPP_ERROR(this->get_logger(),
-                         "Unsupported backend. Only 'libcamera' is allowed.");
-            throw std::runtime_error("invalid camera backend");
-        }
+        std::string pipeline =
+            "v4l2src device=/dev/video0 ! "
+            "video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! "
+            "videoconvert ! "
+            "video/x-raw,format=BGR ! "
+            "appsink drop=true max-buffers=1 sync=false";
+
+        // if (backend == "libcamera")
+        // {
+        //     pipeline =
+        //         "libcamerasrc ! "
+        //         "video/x-raw,format=RGBx,width=640,height=480,framerate=30/1 ! "
+        //         "videoconvert ! "
+        //         "video/x-raw,format=BGR ! "
+        //         "appsink drop=true max-buffers=1 sync=false";
+        // }
+        // else
+        // {
+        //     RCLCPP_ERROR(this->get_logger(),
+        //                  "Unsupported backend. Only 'libcamera' is allowed.");
+        //     throw std::runtime_error("invalid camera backend");
+        // }
 
         RCLCPP_INFO(this->get_logger(), "GStreamer pipeline:\n%s", pipeline.c_str());
 

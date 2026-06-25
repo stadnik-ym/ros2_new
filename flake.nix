@@ -49,7 +49,14 @@
             pkgs.cmake
             pkgs.clang-tools
             pkgs.colcon
-            # pkgs.libcamera
+            pkgs.libcamera
+            pkgs.gst_all_1.gstreamer
+            pkgs.gst_all_1.gst-plugins-base
+            pkgs.gst_all_1.gst-plugins-good
+            pkgs.gst_all_1.gst-plugins-bad
+            pkgs.gst_all_1.gst-plugins-ugly
+            pkgs.gst_all_1.gst-libav
+            pkgs.gst_all_1.gst-plugins-rs
           ];
 
           buildInputs = [
@@ -64,6 +71,9 @@
             export LD_LIBRARY_PATH=${pkgs.lgpio}/lib:$LD_LIBRARY_PATH
             export LIBRARY_PATH=${pkgs.lgpio}/lib:$LIBRARY_PATH
             export CPATH=${pkgs.lgpio}/include:$CPATH
+
+            export GST_PLUGIN_PATH=/usr/lib/aarch64-linux-gnu/gstreamer-1.0
+            export LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu:$LD_LIBRARY_PATH
           '';
         };
       }
