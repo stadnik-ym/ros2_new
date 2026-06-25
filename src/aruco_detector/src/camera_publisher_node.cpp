@@ -28,7 +28,7 @@ class CameraPublisher : public rclcpp::Node
 
         if (is_int)
         {
-            cap_.open(std::stoi(cam_path), cv::CAP_GSTREAMER);
+            cap_.open(std::stoi(cam_path), cv::CAP_V4L2);
         } else
         {
             cap_.open(cam_path);
