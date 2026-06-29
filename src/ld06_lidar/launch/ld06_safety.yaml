@@ -1,0 +1,24 @@
+lidar_safety:
+  ros__parameters:
+    input_cmd_topic: /cmd_vel_raw
+    output_cmd_topic: /cmd_vel
+
+    front_distance_topic: /lidar/front_distance
+    safety_stop_topic: /safety/lidar_stop
+
+    cmd_timeout_sec: 0.5
+    lidar_timeout_sec: 0.7
+    invalid_front_timeout_sec: 0.6
+
+    stop_distance_m: 0.35
+    clear_distance_m: 0.42
+
+    allow_rotation_when_blocked: true
+    allow_reverse_when_blocked: true
+
+    max_linear_x: 0.35
+    max_angular_z: 1.5
+
+    enable_slowdown: false
+    slowdown_distance_m: 0.8
+    min_slowdown_factor: 0.25
