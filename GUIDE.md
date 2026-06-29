@@ -37,13 +37,18 @@ git checkout -b feature/{назва пакету}
 
 Не хвилюйтесь якщо у Вас є пробіли з гітом (або взагалі не вмієте ним користуватись). Цей проект є відмінним місцем для відтачування своїх навичків роботи в команді за допомогою Git. 
 
-Особисто від себе можу порадити https://learngitbranching.js.org/. Тут Ви дізнаєтесь про різницю між git merge та git rebase, як переключатись по коммітам, що таке revert, cherrypick та ще багато цікавого.
+Особисто від себе можу порадити https://learngitbranching.js.org. Тут Ви дізнаєтесь про різницю між git merge та git rebase, як переключатись по коммітам, що таке revert, cherrypick та ще багато цікавого.
 
+
+## Репозиторії проекта
+
+https://github.com/roboaltic/RoboticAlt - перший репозиторій зі всіма фазами (phase1, phase2, phase3)
+
+https://github.com/stadnik-ym/PyRoboticAltPhase2 - остання актуальна phase2 на пайтоні (референс під перепис на С++)
+
+https://github.com/stadnik-ym/CppRoboticAltPhase2 - актуальний репозиторій (phase2 на C++)
 
 ## Корисні посилання
-https://github.com/roboaltic/RoboticAlt - репозиторій Артема 
-
-https://github.com/stadnik-ym/robotalt - мій перезалив останньої версії проекта на пайтоні (референс під перепис на С++)
 
 https://github.com/lopsided98/nix-ros-overlay - ROS2 для Nix
 

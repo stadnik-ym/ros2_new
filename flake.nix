@@ -35,13 +35,8 @@
               cv-bridge
               example-interfaces
               aruco
-<<<<<<< HEAD
-              # camera-ros
-              # libcamera
-=======
 
               teleop-twist-keyboard
->>>>>>> feature/ld06
             ];
           };
 
