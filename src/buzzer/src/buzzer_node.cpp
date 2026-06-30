@@ -1,114 +1,85 @@
 #include "../include/buzzer/buzzer_node.hpp"
+
 #include <chrono>
 #include <stdexcept>
 #include <string>
+#include <thread>
 
 namespace buzzer_node
 {
 
+// ---------------------------------------------------------------------------
+// Constructor
+// ---------------------------------------------------------------------------
 BuzzerNode::BuzzerNode(const rclcpp::NodeOptions & options)
-: Node("buzzer_node", options),
-  chip_(nullptr),
-  line_request_(nullptr),
-  buzzing_(false)
+: Node("buzzer_node", options)
 {
-  // --- Parameters ---
-  this->declare_parameter<std::string>("gpio_chip", "gpiochip0");
-  this->declare_parameter<int>("gpio_line", 18);          // BCM 17 = physical pin 11
-  this->declare_parameter<int>("beep_duration_ms", 500);  // default beep length
-  this->declare_parameter<int>("beep_frequency_hz", 2000);// PWM software frequency
+  this->declare_parameter<std::string>("gpio_chip",       "gpiochip0");
+  this->declare_parameter<int>        ("gpio_line",       17);
+  this->declare_parameter<int>        ("beep_duration_ms",  500);
+  this->declare_parameter<int>        ("beep_frequency_hz", 2000);
 
-  const std::string chip_name = this->get_parameter("gpio_chip").as_string();
-  gpio_line_   = static_cast<unsigned int>(this->get_parameter("gpio_line").as_int());
-  beep_duration_ms_   = this->get_parameter("beep_duration_ms").as_int();
-  beep_frequency_hz_  = this->get_parameter("beep_frequency_hz").as_int();
+  std::string chip_name = this->get_parameter("gpio_chip").as_string();
+  const auto  line_no   = static_cast<unsigned int>(
+                            this->get_parameter("gpio_line").as_int());
+  beep_duration_ms_  = this->get_parameter("beep_duration_ms").as_int();
+  beep_frequency_hz_ = this->get_parameter("beep_frequency_hz").as_int();
 
-  // --- Init GPIO ---
-  init_gpio(chip_name);
+  // v2 API requires the full /dev/ path
+  if (chip_name.rfind("/dev/", 0) != 0) {
+    chip_name = "/dev/" + chip_name;
+  }
 
-  // --- Subscription ---
+  init_gpio(chip_name, line_no);
+
   sub_ = this->create_subscription<std_msgs::msg::Bool>(
-    "buzzer",
-    rclcpp::QoS(10),
+    "buzzer", rclcpp::QoS(10),
     [this](const std_msgs::msg::Bool::SharedPtr msg) {
-      this->buzzer_callback(msg);
+      buzzer_callback(msg);
     });
 
   RCLCPP_INFO(this->get_logger(),
-    "BuzzerNode ready | chip=%s line=%u | beep=%dms @%dHz",
-    chip_name.c_str(), gpio_line_, beep_duration_ms_, beep_frequency_hz_);
+    "BuzzerNode ready  chip=%s  line=%u  beep=%d ms @ %d Hz",
+    chip_name.c_str(), line_no, beep_duration_ms_, beep_frequency_hz_);
 }
 
+// ---------------------------------------------------------------------------
+// Destructor
+// ---------------------------------------------------------------------------
 BuzzerNode::~BuzzerNode()
 {
   stop_beep();
-
   if (beep_thread_.joinable()) {
     beep_thread_.join();
   }
-
-  // libgpiod v2: resources freed by unique_ptr destructors automatically
-  RCLCPP_INFO(this->get_logger(), "BuzzerNode shutting down, GPIO released.");
+  // gpiod::line_request releases the line(s) automatically on destruction
+  RCLCPP_INFO(this->get_logger(), "BuzzerNode shutdown, GPIO released.");
 }
 
 // ---------------------------------------------------------------------------
-// GPIO init (libgpiod v2 API)
+// GPIO init — libgpiod 2.x C++ API (request_builder pattern)
 // ---------------------------------------------------------------------------
-void BuzzerNode::init_gpio(const std::string & chip_name)
+void BuzzerNode::init_gpio(const std::string & chip_path, unsigned int line_offset)
 {
-  chip_ = gpiod_chip_open("/dev/gpiochip");
-  if (!chip_) {
-    throw std::runtime_error("Cannot open GPIO chip: " + chip_name);
-  }
+  line_offset_ = line_offset;
 
-  // Build a line settings object
-  struct gpiod_line_settings * settings = gpiod_line_settings_new();
-  if (!settings) {
-    gpiod_chip_close(chip_);
-    chip_ = nullptr;
-    throw std::runtime_error("Cannot allocate line settings");
-  }
+  try {
+    gpiod::chip chip(chip_path);
 
-  gpiod_line_settings_set_direction(settings, GPIOD_LINE_DIRECTION_OUTPUT);
-  gpiod_line_settings_set_output_value(settings, GPIOD_LINE_VALUE_INACTIVE);
+    gpiod::line_settings settings;
+    settings.set_direction(gpiod::line::direction::OUTPUT);
+    settings.set_output_value(gpiod::line::value::INACTIVE);
 
-  // Build a line config
-  struct gpiod_line_config * line_cfg = gpiod_line_config_new();
-  if (!line_cfg) {
-    gpiod_line_settings_free(settings);
-    gpiod_chip_close(chip_);
-    chip_ = nullptr;
-    throw std::runtime_error("Cannot allocate line config");
-  }
+    request_.emplace(
+      chip.prepare_request()
+        .set_consumer("buzzer_node")
+        .add_line_settings(line_offset_, settings)
+        .do_request());
 
-  const unsigned int offsets[1] = {gpio_line_};
-  int ret = gpiod_line_config_add_line_settings(line_cfg, offsets, 1, settings);
-  gpiod_line_settings_free(settings);
-
-  if (ret < 0) {
-    gpiod_line_config_free(line_cfg);
-    gpiod_chip_close(chip_);
-    chip_ = nullptr;
-    throw std::runtime_error("Cannot configure GPIO line");
-  }
-
-  // Request the lines
-  struct gpiod_request_config * req_cfg = gpiod_request_config_new();
-  if (req_cfg) {
-    gpiod_request_config_set_consumer(req_cfg, "buzzer_node");
-  }
-
-  line_request_ = gpiod_chip_request_lines(chip_, req_cfg, line_cfg);
-
-  if (req_cfg) {
-    gpiod_request_config_free(req_cfg);
-  }
-  gpiod_line_config_free(line_cfg);
-
-  if (!line_request_) {
-    gpiod_chip_close(chip_);
-    chip_ = nullptr;
-    throw std::runtime_error("Cannot request GPIO line " + std::to_string(gpio_line_));
+  } catch (const std::exception & e) {
+    throw std::runtime_error(
+      "Failed to request GPIO line " + std::to_string(line_offset) +
+      " on " + chip_path + ": " + e.what());
   }
 }
 
@@ -131,7 +102,6 @@ void BuzzerNode::buzzer_callback(const std_msgs::msg::Bool::SharedPtr msg)
 // ---------------------------------------------------------------------------
 void BuzzerNode::start_beep()
 {
-  // If already buzzing — just reset the flag so the thread keeps going
   bool expected = false;
   if (!buzzing_.compare_exchange_strong(expected, true)) {
     return;  // already running
@@ -141,26 +111,22 @@ void BuzzerNode::start_beep()
     beep_thread_.join();
   }
 
-  beep_thread_ = std::thread([this]() {
-    beep_loop();
-  });
+  beep_thread_ = std::thread([this] { beep_loop(); });
 }
 
 void BuzzerNode::stop_beep()
 {
   buzzing_.store(false);
-  // Set line LOW immediately
-  set_gpio(false);
+  set_gpio(false);  // drive LOW immediately
 }
 
 void BuzzerNode::beep_loop()
 {
-  // Software PWM: toggle pin at beep_frequency_hz_
-  // half_period_us = 1_000_000 / (2 * freq)
+  // Software PWM — toggle at beep_frequency_hz_
   const int half_period_us = 1'000'000 / (2 * beep_frequency_hz_);
 
-  auto deadline = std::chrono::steady_clock::now() +
-    std::chrono::milliseconds(beep_duration_ms_);
+  const auto deadline =
+    std::chrono::steady_clock::now() + std::chrono::milliseconds(beep_duration_ms_);
 
   bool level = false;
   while (buzzing_.load() && std::chrono::steady_clock::now() < deadline) {
@@ -173,15 +139,17 @@ void BuzzerNode::beep_loop()
   buzzing_.store(false);
 }
 
+// ---------------------------------------------------------------------------
+// GPIO write — gpiod::line_request::set_value(offset, value)
+// ---------------------------------------------------------------------------
 void BuzzerNode::set_gpio(bool high)
 {
-  if (!line_request_) {
+  if (!request_) {
     return;
   }
-  const enum gpiod_line_value val = high ? GPIOD_LINE_VALUE_ACTIVE : GPIOD_LINE_VALUE_INACTIVE;
-  const unsigned int offsets[1] = {gpio_line_};
-  const enum gpiod_line_value values[1] = {val};
-  gpiod_line_request_set_values_subset(line_request_, 1, offsets, values);
+  request_->set_value(
+    line_offset_,
+    high ? gpiod::line::value::ACTIVE : gpiod::line::value::INACTIVE);
 }
 
 }  // namespace buzzer_node
@@ -192,8 +160,7 @@ void BuzzerNode::set_gpio(bool high)
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<buzzer_node::BuzzerNode>();
-  rclcpp::spin(node);
+  rclcpp::spin(std::make_shared<buzzer_node::BuzzerNode>());
   rclcpp::shutdown();
   return 0;
 }
