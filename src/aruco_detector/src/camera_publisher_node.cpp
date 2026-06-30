@@ -32,7 +32,7 @@ public:
     fps_descriptor.description = "Camera FPS. Accepts int or float.";
     declare_parameter<double>("fps", 15.0, fps_descriptor);
 
-    declare_parameter<std::string>("image_topic", "/image_raw");
+    declare_parameter<std::string>("image_topic", "/camera/image_raw");
     declare_parameter<std::string>("status_topic", "/camera/status");
     declare_parameter<std::string>("frame_id", "camera_frame");
 
