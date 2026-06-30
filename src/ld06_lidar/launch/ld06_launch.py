@@ -64,6 +64,13 @@ def generate_launch_description():
         ]
     )
 
+    motor_node = Node(
+        package='diff_rive',
+        executable='motor_node',
+        name='motor_node',
+        output='screen'
+    )
+
     return LaunchDescription([
         port_arg,
         baudrate_arg,
