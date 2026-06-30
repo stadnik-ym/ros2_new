@@ -76,4 +76,5 @@ def generate_launch_description():
         baudrate_arg,
         ld06_node,
         safety_node,
+        motor_node,
     ])
