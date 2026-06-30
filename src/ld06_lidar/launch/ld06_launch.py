@@ -65,7 +65,7 @@ def generate_launch_description():
     )
 
     motor_node = Node(
-        package='diff_rive',
+        package='diff_drive',
         executable='motor_node',
         name='motor_node',
         output='screen'
